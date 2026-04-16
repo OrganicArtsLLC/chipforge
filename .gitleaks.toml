@@ -1,0 +1,12 @@
+title = "ChipForge Gitleaks Configuration"
+
+# OA LLC — Gitleaks allowlist for known false positives
+# See: OA LLC internal ADR-024
+
+[allowlist]
+  description = "Known false positives in ChipForge codebase"
+  regexes = [
+    # localStorage key names matched as generic-api-key — not credentials
+    '''chipforge-qa-v\d+''',
+    '''pv-qa-v\d+''',
+  ]

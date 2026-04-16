@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# Pre-commit hook — OA LLC ChipForge
+# Combines: secret/credential scanning + IP protection (ADR-019)
+# Install: git config core.hooksPath .githooks
+#          chmod +x .githooks/pre-commit   (done by 'make setup')
+set -euo pipefail
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)
+
+# ============================================================
+# PART 1: SECRET / CREDENTIAL SCANNING
+# ============================================================
+
+# Block .env and credential file types
+if echo "$STAGED" | grep -qiE '(^|/)\.env(\.[a-zA-Z0-9]+)?$|\.pem$|\.key$|id_rsa$|id_ed25519$|credentials\.json$|\.p12$|\.pfx$'; then
+  echo "ERROR: Attempted to commit a credential or secret file."
+  echo "Remove from staging: git reset HEAD <file>"
+  exit 1
+fi
+
+# Scan staged diff for credential patterns
+DIFF_OUTPUT=$(git diff --cached -U0 2>/dev/null || true)
+if [ -n "$DIFF_OUTPUT" ]; then
+  if echo "$DIFF_OUTPUT" | grep -v '^---\|^+++\|^@@\|^-' | grep -qiE \
+    'api[_-]?key[[:space:]]*[:=][[:space:]]*[a-zA-Z0-9_\-]{20,}|sk-[a-zA-Z0-9]{32,}|ghp_[a-zA-Z0-9]{36}|AKIA[0-9A-Z]{16}|ELEVENLABS[_A-Z]*[[:space:]]*=[[:space:]]*[a-z0-9_-]{20,}'; then
+    echo "ERROR: Possible credential pattern detected in staged changes."
+    echo "Review diff: git diff --cached"
+    echo "If false positive: git commit --no-verify (document justification in commit)"
+    exit 1
+  fi
+fi
+
+# ============================================================
+# PART 2: IP PROTECTION — PRIVATE FILES (ADR-019)
+# ============================================================
+
+PRIVATE_FILES=(
+  "CLAUDE.md"
+  ".github/copilot-instructions.md"
+  "docs/AGENT-COMPOSITION-GUIDE.md"
+  "docs/ADR-003-composition-bible.md"
+  "publish-public.sh"
+)
+
+for private_file in "${PRIVATE_FILES[@]}"; do
+  if echo "$STAGED" | grep -qxF "$private_file"; then
+    echo "ERROR: Attempted to commit private file: '$private_file'"
+    echo "This file is excluded from public repo (ADR-019)."
+    exit 1
+  fi
+done
+
+# Block non-original cover song scripts
+COVER_SONGS_PATTERN="^(aqualung|axel_f|clocks|core_fable_melody|moonlight|cascade_golden|neural_cascade)\."
+if echo "$STAGED" | grep -qiE '^songs/(pop|rock|stranger.things|soundtrack)/' ; then
+  echo "ERROR: Attempted to commit non-original song from a cover category."
+  echo "Only original compositions belong in the public repo (ADR-019)."
+  exit 1
+fi
+
+# Block EDM songs that are not originals (only 001-005 and 010 series are originals)
+if echo "$STAGED" | grep -qiE '^songs/edm/'; then
+  NON_ORIGINAL_EDM=$(echo "$STAGED" | grep -iE '^songs/edm/' | grep -vE '^songs/edm/00[1-5]_|^songs/edm/010_' || true)
+  if [ -n "$NON_ORIGINAL_EDM" ]; then
+    echo "ERROR: Attempted to commit non-original EDM song(s):"
+    echo "$NON_ORIGINAL_EDM"
+    echo "Only original EDM compositions (001-005, 010 series) belong in public repo."
+    exit 1
+  fi
+fi
+
+# Block derivative character terms in Python source
+DERIVATIVE_TERMS='tuco|angel.eyes|blondie|gbu.standoff|sergio.leone|good.bad.ugly'
+if git diff --cached -U0 -- '*.py' 2>/dev/null | grep -qiE "$DERIVATIVE_TERMS"; then
+  echo "ERROR: Staged Python changes reference derivative GBU character names."
+  echo "Remove derivative references before committing (IP protection, ADR-019)."
+  exit 1
+fi
+
+echo "✓ Pre-commit checks passed (secrets + IP protection)."
+exit 0

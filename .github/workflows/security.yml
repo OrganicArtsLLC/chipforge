@@ -1,0 +1,35 @@
+name: Security — Gitleaks Secret Scan
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+  schedule:
+    - cron: '0 9 * * 1'  # Weekly Monday 9am UTC
+
+jobs:
+  gitleaks:
+    name: Detect hardcoded secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history scan
+
+      - name: Install Gitleaks
+        run: |
+          GITLEAKS_VERSION="8.18.4"
+          curl -sSfL \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar xz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      - name: Scan repository for secrets
+        run: |
+          gitleaks detect \
+            --source . \
+            --config .gitleaks.toml \
+            --log-level warn \
+            --exit-code 1 \
+            --redact

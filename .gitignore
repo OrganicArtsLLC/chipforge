@@ -1,0 +1,95 @@
+# Secrets & credentials (NEVER commit these)
+.env
+.env.*
+.env.local
+.env.production
+.env.staging
+*.key
+*.pem
+*.cert
+secrets/
+.secrets/
+*.p12
+*.pfx
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ChipForge output (generated files — don't commit large WAVs/audio)
+output/**/*.wav
+output/**/*.json
+output/*.wav
+output/*.json
+
+# Keep the output directory structure
+!output/.gitkeep
+
+# Python cache (never track)
+**/__pycache__/
+*.pyc
+
+# macOS
+**/.DS_Store
+
+# ============================================================
+# PRIVATE CONTENT — Not tracked in public repository
+# ============================================================
+# ⚠️  WARNING: Files below are gitignored to keep them out of
+#     the public repo. They still exist on disk for local dev.
+#     DO NOT remove these rules without reviewing ADR-019.
+#     Pre-commit hook enforces this boundary.
+# ============================================================
+
+# --- Agent instructions (private workflow, not for public) ---
+CLAUDE.md
+.github/copilot-instructions.md
+docs/AGENT-COMPOSITION-GUIDE.md
+docs/ADR-003-composition-bible.md
+
+# --- Cover songs (copyrighted material — personal use only) ---
+# Root-level covers
+aqualung.py
+axel_f.py
+clocks.py
+
+# Entire directories of covers
+songs/pop/
+songs/rock/
+songs/stranger-things/
+
+# EDM: mostly covers, keep 5 originals
+songs/edm/*.py
+!songs/edm/001_neon_trance.py
+!songs/edm/002_digital_aurora.py
+!songs/edm/003_fractal_break.py
+!songs/edm/004_underground_pulse.py
+!songs/edm/052_voices_from_code.py
+
+# Soundtrack: mostly covers, keep 1 original
+songs/soundtrack/*.py
+!songs/soundtrack/001_final_boss.py
+
+# --- Superseded tooling ---
+publish-public.sh

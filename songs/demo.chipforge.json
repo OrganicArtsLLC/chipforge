@@ -1,0 +1,507 @@
+{
+  "title": "ChipForge Demo",
+  "author": "ChipForge",
+  "bpm": 140,
+  "patterns": [
+    {
+      "name": "Pattern A",
+      "num_steps": 16,
+      "num_channels": 5,
+      "bpm": 140,
+      "steps_per_beat": 4,
+      "grid": [
+        [
+          {
+            "midi_note": 72,
+            "velocity": 0.8,
+            "duration_steps": 1,
+            "instrument": "pulse_chime"
+          },
+          null,
+          {
+            "midi_note": 75,
+            "velocity": 0.8,
+            "duration_steps": 1,
+            "instrument": "pulse_chime"
+          },
+          null,
+          {
+            "midi_note": 77,
+            "velocity": 0.8,
+            "duration_steps": 1,
+            "instrument": "pulse_chime"
+          },
+          {
+            "midi_note": 79,
+            "velocity": 0.8,
+            "duration_steps": 1,
+            "instrument": "pulse_chime"
+          },
+          {
+            "midi_note": 77,
+            "velocity": 0.8,
+            "duration_steps": 1,
+            "instrument": "pulse_chime"
+          },
+          null,
+          {
+            "midi_note": 75,
+            "velocity": 0.8,
+            "duration_steps": 1,
+            "instrument": "pulse_chime"
+          },
+          {
+            "midi_note": 72,
+            "velocity": 0.8,
+            "duration_steps": 1,
+            "instrument": "pulse_chime"
+          },
+          null,
+          {
+            "midi_note": 75,
+            "velocity": 0.8,
+            "duration_steps": 1,
+            "instrument": "pulse_chime"
+          },
+          {
+            "midi_note": 77,
+            "velocity": 0.8,
+            "duration_steps": 1,
+            "instrument": "pulse_chime"
+          },
+          null,
+          null,
+          null
+        ],
+        [
+          {
+            "midi_note": 60,
+            "velocity": 0.85,
+            "duration_steps": 2,
+            "instrument": "pulse_bass"
+          },
+          null,
+          null,
+          null,
+          {
+            "midi_note": 60,
+            "velocity": 0.85,
+            "duration_steps": 2,
+            "instrument": "pulse_bass"
+          },
+          null,
+          null,
+          null,
+          {
+            "midi_note": 63,
+            "velocity": 0.85,
+            "duration_steps": 2,
+            "instrument": "pulse_bass"
+          },
+          null,
+          null,
+          null,
+          {
+            "midi_note": 65,
+            "velocity": 0.85,
+            "duration_steps": 2,
+            "instrument": "pulse_bass"
+          },
+          null,
+          null,
+          null
+        ],
+        [
+          {
+            "midi_note": 60,
+            "velocity": 0.55,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          null,
+          {
+            "midi_note": 60,
+            "velocity": 0.55,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          null,
+          {
+            "midi_note": 60,
+            "velocity": 0.55,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          null,
+          {
+            "midi_note": 60,
+            "velocity": 0.55,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          null,
+          {
+            "midi_note": 60,
+            "velocity": 0.55,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          null,
+          {
+            "midi_note": 60,
+            "velocity": 0.55,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          null,
+          {
+            "midi_note": 60,
+            "velocity": 0.55,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          null,
+          {
+            "midi_note": 60,
+            "velocity": 0.55,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          null
+        ],
+        [
+          {
+            "midi_note": 60,
+            "velocity": 0.9,
+            "duration_steps": 1,
+            "instrument": "noise_kick"
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "midi_note": 60,
+            "velocity": 0.9,
+            "duration_steps": 1,
+            "instrument": "noise_kick"
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          {
+            "midi_note": 60,
+            "velocity": 0.75,
+            "duration_steps": 1,
+            "instrument": "noise_snare"
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "midi_note": 60,
+            "velocity": 0.75,
+            "duration_steps": 1,
+            "instrument": "noise_snare"
+          },
+          null,
+          null,
+          null
+        ]
+      ]
+    },
+    {
+      "name": "Pattern B",
+      "num_steps": 16,
+      "num_channels": 5,
+      "bpm": 140,
+      "steps_per_beat": 4,
+      "grid": [
+        [
+          {
+            "midi_note": 82,
+            "velocity": 0.75,
+            "duration_steps": 1,
+            "instrument": "wave_melody"
+          },
+          null,
+          {
+            "midi_note": 79,
+            "velocity": 0.75,
+            "duration_steps": 1,
+            "instrument": "wave_melody"
+          },
+          null,
+          {
+            "midi_note": 77,
+            "velocity": 0.75,
+            "duration_steps": 1,
+            "instrument": "wave_melody"
+          },
+          null,
+          {
+            "midi_note": 75,
+            "velocity": 0.75,
+            "duration_steps": 1,
+            "instrument": "wave_melody"
+          },
+          null,
+          {
+            "midi_note": 72,
+            "velocity": 0.75,
+            "duration_steps": 1,
+            "instrument": "wave_melody"
+          },
+          null,
+          {
+            "midi_note": 75,
+            "velocity": 0.75,
+            "duration_steps": 1,
+            "instrument": "wave_melody"
+          },
+          {
+            "midi_note": 77,
+            "velocity": 0.75,
+            "duration_steps": 1,
+            "instrument": "wave_melody"
+          },
+          {
+            "midi_note": 79,
+            "velocity": 0.75,
+            "duration_steps": 1,
+            "instrument": "wave_melody"
+          },
+          null,
+          null,
+          null
+        ],
+        [
+          {
+            "midi_note": 67,
+            "velocity": 0.8,
+            "duration_steps": 2,
+            "instrument": "wave_bass"
+          },
+          null,
+          null,
+          null,
+          {
+            "midi_note": 65,
+            "velocity": 0.8,
+            "duration_steps": 2,
+            "instrument": "wave_bass"
+          },
+          null,
+          null,
+          null,
+          {
+            "midi_note": 63,
+            "velocity": 0.8,
+            "duration_steps": 2,
+            "instrument": "wave_bass"
+          },
+          null,
+          null,
+          null,
+          {
+            "midi_note": 60,
+            "velocity": 0.8,
+            "duration_steps": 2,
+            "instrument": "wave_bass"
+          },
+          null,
+          null,
+          null
+        ],
+        [
+          {
+            "midi_note": 60,
+            "velocity": 0.6,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          {
+            "midi_note": 60,
+            "velocity": 0.45,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          {
+            "midi_note": 60,
+            "velocity": 0.6,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          {
+            "midi_note": 60,
+            "velocity": 0.45,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          {
+            "midi_note": 60,
+            "velocity": 0.6,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          {
+            "midi_note": 60,
+            "velocity": 0.45,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          {
+            "midi_note": 60,
+            "velocity": 0.6,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          {
+            "midi_note": 60,
+            "velocity": 0.45,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          {
+            "midi_note": 60,
+            "velocity": 0.6,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          {
+            "midi_note": 60,
+            "velocity": 0.45,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          {
+            "midi_note": 60,
+            "velocity": 0.6,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          {
+            "midi_note": 60,
+            "velocity": 0.45,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          {
+            "midi_note": 60,
+            "velocity": 0.6,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          {
+            "midi_note": 60,
+            "velocity": 0.45,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          {
+            "midi_note": 60,
+            "velocity": 0.6,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          },
+          {
+            "midi_note": 60,
+            "velocity": 0.45,
+            "duration_steps": 1,
+            "instrument": "noise_hat"
+          }
+        ],
+        [
+          {
+            "midi_note": 60,
+            "velocity": 0.88,
+            "duration_steps": 1,
+            "instrument": "noise_kick"
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "midi_note": 60,
+            "velocity": 0.88,
+            "duration_steps": 1,
+            "instrument": "noise_kick"
+          },
+          null,
+          {
+            "midi_note": 60,
+            "velocity": 0.88,
+            "duration_steps": 1,
+            "instrument": "noise_kick"
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "midi_note": 60,
+            "velocity": 0.88,
+            "duration_steps": 1,
+            "instrument": "noise_kick"
+          },
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          {
+            "midi_note": 60,
+            "velocity": 0.72,
+            "duration_steps": 1,
+            "instrument": "noise_snare"
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "midi_note": 60,
+            "velocity": 0.72,
+            "duration_steps": 1,
+            "instrument": "noise_snare"
+          },
+          null,
+          null,
+          null
+        ]
+      ]
+    }
+  ],
+  "sequence": [
+    0,
+    0,
+    1,
+    0,
+    0
+  ]
+}

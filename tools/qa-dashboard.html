@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChipForge — QA Dashboard</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a14; color: #ccc; font-family: 'SF Mono','Consolas','Menlo',monospace; font-size: 13px; }
+
+/* ─── HEADER ─── */
+.header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  background: #12121e; border-bottom: 1px solid #2a2a3a; padding: 10px 20px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.header h1 { color: #7bf; font-size: 16px; white-space: nowrap; }
+.header .stats { display: flex; gap: 6px; font-size: 11px; flex-wrap: wrap; }
+.header .stat { padding: 3px 8px; border-radius: 3px; cursor: pointer; border: 1px solid transparent; }
+.header .stat:hover { opacity: 0.8; }
+.stat-favorite { background: #251; color: #6f4; border-color: #362; }
+.stat-good { background: #142; color: #4f6; }
+.stat-needs-work { background: #432; color: #fa0; }
+.stat-broken { background: #421; color: #f64; }
+.stat-untested { background: #222; color: #888; }
+.stat-total { background: #1a1a2a; color: #fff; }
+.filters { display: flex; gap: 8px; align-items: center; }
+.filters select, .filters input {
+  background: #1a1a2a; border: 1px solid #2a2a3a; color: #ccc; padding: 4px 8px;
+  border-radius: 3px; font-family: inherit; font-size: 12px;
+}
+.filters input { width: 160px; }
+.btn { background: #1e2838; color: #7bf; border: 1px solid #2a3a4a; padding: 4px 12px; border-radius: 3px; cursor: pointer; font-family: inherit; font-size: 12px; }
+.btn:hover { background: #2a3a4a; }
+.btn-export { background: #142; color: #4f6; border-color: #253; }
+
+/* ─── DROP ZONE ─── */
+.drop-zone {
+  margin: 60px 20px 10px; border: 2px dashed #2a2a3a; border-radius: 8px;
+  padding: 24px; text-align: center; color: #555; transition: all 0.2s;
+}
+.drop-zone.drag-over { border-color: #7bf; color: #7bf; background: #12182a; }
+.drop-zone input { display: none; }
+
+/* ─── GRID ─── */
+.container { padding: 10px 20px; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 10px;
+}
+
+/* ─── CARD ─── */
+.card {
+  background: #12121e; border: 1px solid #1e1e2e; border-radius: 6px;
+  overflow: hidden; transition: border-color 0.15s;
+}
+.card:hover { border-color: #3a3a4a; }
+.card.status-favorite { border-left: 3px solid #6f4; background: #0f1a0f; }
+.card.status-good { border-left: 3px solid #4f6; }
+.card.status-needs-work { border-left: 3px solid #fa0; }
+.card.status-broken { border-left: 3px solid #f42; }
+.card.status-untested { border-left: 3px solid #333; }
+
+.card-header {
+  padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;
+  background: #161622; border-bottom: 1px solid #1e1e2e;
+}
+.card-title { font-size: 12px; font-weight: bold; color: #ddd; }
+.card-meta { font-size: 10px; color: #555; }
+.card-badge { display: flex; gap: 4px; align-items: center; }
+.card-genre { font-size: 9px; padding: 1px 6px; border-radius: 2px; background: #1e2838; color: #7bf; }
+.card-version { font-size: 9px; padding: 1px 4px; border-radius: 2px; background: #2a2a1a; color: #cc0; }
+
+/* Waveform preview */
+.card-waveform { height: 60px; background: #0a0a14; position: relative; cursor: pointer; }
+.card-waveform canvas { width: 100%; height: 100%; }
+.card-waveform .play-overlay {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  color: #fff; font-size: 20px; opacity: 0; transition: opacity 0.15s; pointer-events: none;
+}
+.card-waveform:hover .play-overlay { opacity: 0.6; }
+.card-waveform .duration {
+  position: absolute; bottom: 2px; right: 6px; font-size: 9px; color: #555;
+}
+
+/* Status actions */
+.card-actions {
+  padding: 6px 10px; display: flex; gap: 4px; align-items: center;
+  background: #161622; border-top: 1px solid #1e1e2e;
+}
+.card-actions button {
+  padding: 3px 8px; border-radius: 3px; border: 1px solid #2a2a3a;
+  background: #1a1a2a; color: #888; font-size: 10px; cursor: pointer; font-family: inherit;
+}
+.card-actions button:hover { background: #2a2a3a; color: #ddd; }
+.card-actions button.active-favorite { background: #251; color: #6f4; border-color: #362; }
+.card-actions button.active-good { background: #142; color: #4f6; border-color: #253; }
+.card-actions button.active-needs-work { background: #432; color: #fa0; border-color: #543; }
+.card-actions button.active-broken { background: #311; color: #f64; border-color: #422; }
+
+.card-notes {
+  display: none; padding: 6px 10px; border-top: 1px solid #1e1e2e;
+}
+.card-notes.open { display: block; }
+.card-notes textarea {
+  width: 100%; height: 50px; background: #0e0e1a; border: 1px solid #1e1e2e;
+  color: #ccc; padding: 6px 8px; font-family: inherit; font-size: 11px;
+  border-radius: 3px; resize: vertical;
+}
+.card-notes .ts-note {
+  background: #0e0e1a; border-radius: 3px; padding: 4px 8px; margin-top: 4px;
+  font-size: 10px; display: flex; justify-content: space-between; align-items: start;
+}
+.card-notes .ts-note .ts-time { color: #7bf; min-width: 40px; }
+.card-notes .ts-note .ts-type { font-size: 9px; text-transform: uppercase; padding: 0 4px; border-radius: 2px; }
+.ts-type-bug { background: #311; color: #f64; }
+.ts-type-enhancement { background: #1e2838; color: #7bf; }
+.ts-type-praise { background: #251; color: #6f4; }
+.ts-type-note { background: #2a2a1a; color: #cc0; }
+.ts-type-instrument { background: #2a1a2a; color: #c8f; }
+.ts-type-mix { background: #1a2a2a; color: #4cc; }
+.card-notes .ts-note .ts-text { color: #aaa; flex: 1; margin: 0 8px; }
+.card-notes .ts-note .ts-del { color: #444; cursor: pointer; font-size: 10px; }
+.card-notes .ts-note .ts-del:hover { color: #f44; }
+
+/* ─── PLAYER BAR ─── */
+.player-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+  background: #12121e; border-top: 1px solid #2a2a3a; padding: 8px 20px;
+  display: flex; align-items: center; gap: 12px;
+}
+.player-bar.hidden { display: none; }
+.player-bar button {
+  background: #1a1a2a; border: 1px solid #2a2a3a; color: #ddd;
+  padding: 4px 10px; border-radius: 3px; cursor: pointer; font-family: inherit; font-size: 12px;
+}
+.player-bar button:hover { background: #2a2a3a; }
+.player-bar button.playing { background: #1e2838; border-color: #7bf; color: #7bf; }
+.player-bar .time { color: #7bf; font-size: 13px; font-variant-numeric: tabular-nums; min-width: 90px; }
+.player-bar .now-playing { color: #ddd; font-size: 12px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.player-bar .progress-bar { flex: 2; height: 6px; background: #1a1a2a; border-radius: 3px; cursor: pointer; position: relative; }
+.player-bar .progress-fill { height: 100%; background: #3a5a8a; border-radius: 3px; transition: width 0.1s; }
+.player-bar .progress-bar .marker {
+  position: absolute; top: -4px; width: 2px; height: 14px; border-radius: 1px;
+}
+.marker-bug { background: #f44; }
+.marker-praise { background: #4f4; }
+.marker-note { background: #fa0; }
+.marker-enhancement { background: #7bf; }
+
+/* Quick feedback bar */
+.quick-fb {
+  display: flex; gap: 4px; margin-left: 8px;
+}
+.quick-fb button {
+  padding: 3px 8px; font-size: 10px;
+}
+
+.keyboard-hint {
+  position: fixed; bottom: 48px; right: 10px; background: #12121e; border: 1px solid #2a2a3a;
+  padding: 4px 10px; border-radius: 4px; font-size: 9px; color: #444; z-index: 40;
+}
+kbd { background: #1a1a2a; border: 1px solid #2a2a3a; padding: 0 4px; border-radius: 2px; color: #666; }
+
+/* ─── SPECTROGRAM OVERLAY ─── */
+.spec-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 50px;
+  background: rgba(6,6,12,0.95); z-index: 60; flex-direction: column;
+}
+.spec-overlay.active { display: flex; }
+.spec-bar {
+  padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;
+  background: #12121e; border-bottom: 1px solid #2a2a3a;
+}
+.spec-bar .title { color: #7bf; font-size: 14px; }
+.spec-bar .close-btn { color: #555; font-size: 22px; cursor: pointer; }
+.spec-bar .close-btn:hover { color: #fff; }
+.spec-content { flex: 1; display: flex; flex-direction: column; }
+.spec-content canvas { width: 100%; flex: 1; }
+
+/* Note input in spec overlay */
+.spec-feedback {
+  padding: 8px 20px; background: #12121e; border-top: 1px solid #2a2a3a;
+  display: flex; gap: 8px; align-items: center;
+}
+.spec-feedback select {
+  background: #1a1a2a; border: 1px solid #2a2a3a; color: #ccc; padding: 4px;
+  border-radius: 3px; font-family: inherit; font-size: 11px;
+}
+.spec-feedback input {
+  flex: 1; background: #1a1a2a; border: 1px solid #2a2a3a; color: #ccc;
+  padding: 4px 8px; border-radius: 3px; font-family: inherit; font-size: 12px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>ChipForge QA</h1>
+  <div class="stats">
+    <span class="stat stat-favorite" id="stat-favorite" onclick="filterTo('favorite')">★ Favorite: 0</span>
+    <span class="stat stat-good" id="stat-good" onclick="filterTo('good')">Good: 0</span>
+    <span class="stat stat-needs-work" id="stat-needs-work" onclick="filterTo('needs-work')">Needs Work: 0</span>
+    <span class="stat stat-broken" id="stat-broken" onclick="filterTo('broken')">Broken: 0</span>
+    <span class="stat stat-untested" id="stat-untested" onclick="filterTo('untested')">Untested: 0</span>
+    <span class="stat stat-total" id="stat-total" onclick="filterTo('all')">Total: 0</span>
+  </div>
+  <div class="filters">
+    <select id="filter-status" onchange="renderGrid()">
+      <option value="all">All</option>
+      <option value="favorite">★ Favorite</option>
+      <option value="good">Good</option>
+      <option value="needs-work">Needs Work</option>
+      <option value="broken">Broken</option>
+      <option value="untested">Untested</option>
+    </select>
+    <select id="filter-genre" onchange="renderGrid()">
+      <option value="all">All Genres</option>
+    </select>
+    <input type="text" id="filter-search" placeholder="Search songs..." oninput="renderGrid()">
+    <button class="btn btn-export" onclick="exportFeedback()">Export JSON</button>
+    <button class="btn" onclick="importFeedback()">Import</button>
+  </div>
+</div>
+
+<div class="drop-zone" id="dropZone">
+  Drop WAV files here to add songs · or click to browse
+  <input type="file" id="fileInput" accept=".wav,.mp3,.ogg" multiple>
+</div>
+
+<div class="container"><div class="grid" id="grid"></div></div>
+
+<!-- PLAYER BAR (fixed bottom) -->
+<div class="player-bar hidden" id="playerBar">
+  <button id="btnPlay" onclick="togglePlay()">▶</button>
+  <button onclick="skip(-5)">◀◀</button>
+  <span class="time" id="timeDisplay">0:00 / 0:00</span>
+  <div class="progress-bar" id="progressBar" onclick="seekTo(event)">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+  <button onclick="skip(5)">▶▶</button>
+  <span class="now-playing" id="nowPlaying">—</span>
+  <div class="quick-fb">
+    <button onclick="quickNote('praise','Sounds great')" title="Sounds great">👍</button>
+    <button onclick="quickNote('bug','Bug/glitch')" title="Bug">🐛</button>
+    <button onclick="quickNote('enhancement','Needs improvement')" title="Needs work">🔧</button>
+    <button onclick="quickNote('instrument','Instrument issue')" title="Instrument">🎸</button>
+    <button onclick="quickNote('mix','Mix issue')" title="Mix">🎚️</button>
+    <button onclick="openSpectrogram()" title="Spectrogram">📊</button>
+  </div>
+</div>
+
+<!-- SPECTROGRAM OVERLAY -->
+<div class="spec-overlay" id="specOverlay">
+  <div class="spec-bar">
+    <span class="title" id="specTitle">Spectrogram</span>
+    <span class="close-btn" onclick="closeSpectrogram()">×</span>
+  </div>
+  <div class="spec-content">
+    <canvas id="specCanvas"></canvas>
+    <canvas id="waveCanvas" style="height:80px;max-height:80px"></canvas>
+  </div>
+  <div class="spec-feedback">
+    <select id="specNoteType">
+      <option value="note">📝 Note</option>
+      <option value="bug">🐛 Bug</option>
+      <option value="enhancement">💡 Enhancement</option>
+      <option value="instrument">🎸 Instrument</option>
+      <option value="mix">🎚️ Mix</option>
+      <option value="praise">⭐ Praise</option>
+    </select>
+    <input type="text" id="specNoteText" placeholder="Add note at current time... (Enter to submit)" onkeydown="if(event.key==='Enter')addSpecNote()">
+    <button class="btn" onclick="addSpecNote()">Add</button>
+  </div>
+</div>
+
+<div class="keyboard-hint">
+  <kbd>Space</kbd> play/pause &nbsp; <kbd>←</kbd><kbd>→</kbd> skip &nbsp;
+  <kbd>F</kbd> favorite &nbsp; <kbd>B</kbd> bug &nbsp; <kbd>N</kbd> note &nbsp;
+  <kbd>S</kbd> spectrogram &nbsp; <kbd>Esc</kbd> close
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// ChipForge QA Dashboard v2
+// ═══════════════════════════════════════════════════════════
+
+const STORAGE_KEY = 'chipforge-qa-v2';
+const STATUS_ORDER = ['favorite','good','needs-work','broken','untested'];
+
+let songs = [];        // {name, genre, version, buffer, duration, file}
+let state = {};        // {songName: {status, notes:[], generalNotes}}
+let currentSong = null;
+let audioCtx = null;
+let sourceNode = null;
+let analyser = null;
+let isPlaying = false;
+let startTime = 0;
+let pauseOffset = 0;
+
+// ─── PERSISTENCE ─────────────────────────────────────
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
+}
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+}
+state = loadState();
+
+// ─── FILE LOADING ────────────────────────────────────
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFiles(e.dataTransfer.files); });
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+async function handleFiles(files) {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  for (const file of files) {
+    if (!file.name.match(/\.(wav|mp3|ogg)$/i)) continue;
+    try {
+      const ab = await file.arrayBuffer();
+      const decoded = await audioCtx.decodeAudioData(ab);
+      const name = file.name.replace(/\.(wav|mp3|ogg)$/i, '');
+
+      // Parse genre/version from filename
+      const parts = name.split('/');
+      const basename = parts[parts.length - 1];
+      let genre = 'unknown';
+      if (name.includes('edm') || basename.match(/^\d{3}_/)) genre = 'edm';
+      if (name.includes('soundtrack')) genre = 'soundtrack';
+      if (name.includes('rock')) genre = 'rock';
+      if (name.includes('stranger') || name.includes('classical') || name.includes('pop')) {
+        genre = name.includes('stranger') ? 'stranger-things' : name.includes('classical') ? 'classical' : 'pop';
+      }
+      const vMatch = basename.match(/_v(\d+)/);
+      const version = vMatch ? `v${vMatch[1]}` : 'v1';
+
+      // Check for duplicate
+      if (songs.find(s => s.name === name)) continue;
+
+      songs.push({ name, genre, version, buffer: decoded, duration: decoded.duration, file: file.name });
+      if (!state[name]) state[name] = { status: 'untested', notes: [], generalNotes: '' };
+    } catch(e) { console.error(`Failed to load ${file.name}:`, e); }
+  }
+  rebuildGenreFilter();
+  renderGrid();
+  updateStats();
+  saveState();
+}
+
+// ─── SONG PARSING ────────────────────────────────────
+
+function parseSongTitle(name) {
+  let clean = name.replace(/^\d{3}_/, '').replace(/_v\d+$/, '').replace(/_/g, ' ');
+  return clean.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+// ─── GRID RENDERING ──────────────────────────────────
+
+function rebuildGenreFilter() {
+  const genres = [...new Set(songs.map(s => s.genre))].sort();
+  const sel = document.getElementById('filter-genre');
+  sel.innerHTML = '<option value="all">All Genres</option>';
+  genres.forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = g; sel.appendChild(o); });
+}
+
+function getFiltered() {
+  const sf = document.getElementById('filter-status').value;
+  const gf = document.getElementById('filter-genre').value;
+  const q = document.getElementById('filter-search').value.toLowerCase();
+  return songs.filter(s => {
+    const st = (state[s.name] || {}).status || 'untested';
+    if (sf !== 'all' && st !== sf) return false;
+    if (gf !== 'all' && s.genre !== gf) return false;
+    if (q && !s.name.toLowerCase().includes(q) && !parseSongTitle(s.name).toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function filterTo(s) {
+  document.getElementById('filter-status').value = s;
+  renderGrid();
+}
+
+function renderGrid() {
+  const filtered = getFiltered();
+  const grid = document.getElementById('grid');
+
+  grid.innerHTML = filtered.map(s => {
+    const st = (state[s.name] || {}).status || 'untested';
+    const notes = (state[s.name] || {}).notes || [];
+    const title = parseSongTitle(s.name);
+    const noteCount = notes.length;
+    const bugCount = notes.filter(n => n.type === 'bug').length;
+
+    return `<div class="card status-${st}" id="card-${CSS.escape(s.name)}">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${title}</div>
+          <div class="card-meta">${formatTime(s.duration)} · ${s.genre}${noteCount ? ` · ${noteCount} notes` : ''}${bugCount ? ` · ${bugCount} bugs` : ''}</div>
+        </div>
+        <div class="card-badge">
+          <span class="card-genre">${s.genre}</span>
+          ${s.version !== 'v1' ? `<span class="card-version">${s.version}</span>` : ''}
+        </div>
+      </div>
+      <div class="card-waveform" onclick="playSong('${CSS.escape(s.name)}')" id="wf-${CSS.escape(s.name)}">
+        <canvas></canvas>
+        <span class="play-overlay">▶</span>
+        <span class="duration">${formatTime(s.duration)}</span>
+      </div>
+      <div class="card-actions">
+        <button class="${st==='favorite'?'active-favorite':''}" onclick="markSong('${CSS.escape(s.name)}','favorite')" title="Favorite">★</button>
+        <button class="${st==='good'?'active-good':''}" onclick="markSong('${CSS.escape(s.name)}','good')" title="Good">✓</button>
+        <button class="${st==='needs-work'?'active-needs-work':''}" onclick="markSong('${CSS.escape(s.name)}','needs-work')" title="Needs work">~</button>
+        <button class="${st==='broken'?'active-broken':''}" onclick="markSong('${CSS.escape(s.name)}','broken')" title="Broken">✗</button>
+        <button onclick="toggleNotes('${CSS.escape(s.name)}')" style="margin-left:auto" title="Notes">📝 ${noteCount||''}</button>
+      </div>
+      <div class="card-notes" id="notes-${CSS.escape(s.name)}">
+        ${notes.map((n, i) => `<div class="ts-note">
+          <span class="ts-time">${formatTime(n.time)}</span>
+          <span class="ts-type ts-type-${n.type}">${n.type}</span>
+          <span class="ts-text">${escHtml(n.text)}</span>
+          <span class="ts-del" onclick="deleteNote('${CSS.escape(s.name)}',${i})">✕</span>
+        </div>`).join('')}
+        <textarea placeholder="General notes about this song..."
+                  onchange="saveGeneralNotes('${CSS.escape(s.name)}',this.value)"
+        >${escHtml((state[s.name]||{}).generalNotes||'')}</textarea>
+      </div>
+    </div>`;
+  }).join('');
+
+  updateStats();
+
+  // Draw mini waveforms
+  requestAnimationFrame(() => {
+    filtered.forEach(s => drawMiniWaveform(s));
+  });
+}
+
+function drawMiniWaveform(song) {
+  const container = document.getElementById(`wf-${CSS.escape(song.name)}`);
+  if (!container) return;
+  const canvas = container.querySelector('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = container.clientWidth * 2;
+  canvas.height = container.clientHeight * 2;
+  const w = canvas.width, h = canvas.height;
+
+  const data = song.buffer.getChannelData(0);
+  const step = Math.ceil(data.length / w);
+
+  ctx.fillStyle = '#0a0a14';
+  ctx.fillRect(0, 0, w, h);
+
+  // Waveform
+  const st = (state[song.name] || {}).status || 'untested';
+  const colors = { favorite: '#2a5a2a', good: '#1a4a2a', 'needs-work': '#4a3a1a', broken: '#4a1a1a', untested: '#1a1a2a' };
+  ctx.strokeStyle = colors[st] || '#1a1a2a';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let i = 0; i < w; i++) {
+    const idx = i * step;
+    let min = 1, max = -1;
+    for (let j = 0; j < step && idx + j < data.length; j++) {
+      const v = data[idx + j];
+      if (v < min) min = v;
+      if (v > max) max = v;
+    }
+    ctx.moveTo(i, (1 - max) * h / 2);
+    ctx.lineTo(i, (1 - min) * h / 2);
+  }
+  ctx.stroke();
+
+  // Draw note markers
+  const notes = (state[song.name] || {}).notes || [];
+  notes.forEach(n => {
+    const x = (n.time / song.duration) * w;
+    const markerColors = { bug: '#f44', praise: '#4f4', enhancement: '#7bf', note: '#fa0', instrument: '#c8f', mix: '#4cc' };
+    ctx.strokeStyle = markerColors[n.type] || '#fa0';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  });
+}
+
+function updateStats() {
+  const counts = { favorite: 0, good: 0, 'needs-work': 0, broken: 0, untested: 0 };
+  songs.forEach(s => {
+    const st = (state[s.name] || {}).status || 'untested';
+    counts[st] = (counts[st] || 0) + 1;
+  });
+  document.getElementById('stat-favorite').textContent = `★ Favorite: ${counts.favorite}`;
+  document.getElementById('stat-good').textContent = `Good: ${counts.good}`;
+  document.getElementById('stat-needs-work').textContent = `Needs Work: ${counts['needs-work']}`;
+  document.getElementById('stat-broken').textContent = `Broken: ${counts.broken}`;
+  document.getElementById('stat-untested').textContent = `Untested: ${counts.untested}`;
+  document.getElementById('stat-total').textContent = `Total: ${songs.length}`;
+}
+
+// ─── SONG STATUS ─────────────────────────────────────
+
+function markSong(name, status) {
+  name = CSS.unescape(name);
+  if (!state[name]) state[name] = { status: 'untested', notes: [], generalNotes: '' };
+  state[name].status = state[name].status === status ? 'untested' : status;
+  saveState();
+  renderGrid();
+}
+
+function toggleNotes(name) {
+  const el = document.getElementById(`notes-${name}`);
+  if (el) el.classList.toggle('open');
+}
+
+function saveGeneralNotes(name, text) {
+  name = CSS.unescape(name);
+  if (!state[name]) state[name] = { status: 'untested', notes: [], generalNotes: '' };
+  state[name].generalNotes = text;
+  saveState();
+}
+
+function deleteNote(name, idx) {
+  name = CSS.unescape(name);
+  if (state[name] && state[name].notes) {
+    state[name].notes.splice(idx, 1);
+    saveState();
+    renderGrid();
+  }
+}
+
+// ─── PLAYBACK ────────────────────────────────────────
+
+function playSong(name) {
+  name = CSS.unescape(name);
+  const song = songs.find(s => s.name === name);
+  if (!song) return;
+  stopPlayback();
+  currentSong = song;
+  pauseOffset = 0;
+  document.getElementById('playerBar').classList.remove('hidden');
+  document.getElementById('nowPlaying').textContent = parseSongTitle(song.name);
+  startPlayback();
+  drawProgressMarkers();
+}
+
+function startPlayback() {
+  if (!currentSong) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  sourceNode = audioCtx.createBufferSource();
+  sourceNode.buffer = currentSong.buffer;
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 2048;
+  sourceNode.connect(analyser);
+  analyser.connect(audioCtx.destination);
+  sourceNode.start(0, pauseOffset);
+  startTime = audioCtx.currentTime - pauseOffset;
+  isPlaying = true;
+  document.getElementById('btnPlay').textContent = '⏸';
+  document.getElementById('btnPlay').classList.add('playing');
+  sourceNode.onended = () => {
+    if (isPlaying) { isPlaying = false; pauseOffset = 0; updatePlayButton(); }
+  };
+  requestAnimationFrame(updatePlayer);
+}
+
+function togglePlay() {
+  if (!currentSong) return;
+  if (isPlaying) { pauseOffset = audioCtx.currentTime - startTime; sourceNode.stop(); sourceNode = null; isPlaying = false; updatePlayButton(); }
+  else startPlayback();
+}
+
+function stopPlayback() {
+  if (sourceNode) { try { sourceNode.stop(); } catch {} sourceNode = null; }
+  isPlaying = false; pauseOffset = 0; updatePlayButton();
+}
+
+function updatePlayButton() {
+  document.getElementById('btnPlay').textContent = isPlaying ? '⏸' : '▶';
+  document.getElementById('btnPlay').classList.toggle('playing', isPlaying);
+}
+
+function skip(sec) {
+  if (!currentSong) return;
+  const was = isPlaying;
+  if (isPlaying) { pauseOffset = audioCtx.currentTime - startTime; sourceNode.stop(); sourceNode = null; isPlaying = false; }
+  pauseOffset = Math.max(0, Math.min(currentSong.duration, pauseOffset + sec));
+  if (was) startPlayback(); else updateTimeDisplay();
+}
+
+function seekTo(e) {
+  if (!currentSong) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  const was = isPlaying;
+  if (isPlaying) { pauseOffset = audioCtx.currentTime - startTime; sourceNode.stop(); sourceNode = null; isPlaying = false; }
+  pauseOffset = pct * currentSong.duration;
+  if (was) startPlayback(); else updateTimeDisplay();
+}
+
+function getCurrentTime() {
+  if (isPlaying && audioCtx) return audioCtx.currentTime - startTime;
+  return pauseOffset;
+}
+
+function updateTimeDisplay() {
+  if (!currentSong) return;
+  const t = getCurrentTime();
+  document.getElementById('timeDisplay').textContent = `${formatTime(t)} / ${formatTime(currentSong.duration)}`;
+  document.getElementById('progressFill').style.width = `${(t / currentSong.duration) * 100}%`;
+}
+
+function updatePlayer() {
+  if (!isPlaying) return;
+  updateTimeDisplay();
+  // Update spectrogram if open
+  if (document.getElementById('specOverlay').classList.contains('active')) updateSpectrogram();
+  requestAnimationFrame(updatePlayer);
+}
+
+function drawProgressMarkers() {
+  if (!currentSong) return;
+  const bar = document.getElementById('progressBar');
+  bar.querySelectorAll('.marker').forEach(m => m.remove());
+  const notes = (state[currentSong.name] || {}).notes || [];
+  notes.forEach(n => {
+    const pct = (n.time / currentSong.duration) * 100;
+    const cls = { bug: 'marker-bug', praise: 'marker-praise', enhancement: 'marker-enhancement' };
+    const marker = document.createElement('div');
+    marker.className = `marker ${cls[n.type] || 'marker-note'}`;
+    marker.style.left = `${pct}%`;
+    marker.title = `${formatTime(n.time)} — ${n.type}: ${n.text}`;
+    bar.appendChild(marker);
+  });
+}
+
+// ─── FEEDBACK ────────────────────────────────────────
+
+function quickNote(type, text) {
+  if (!currentSong) return;
+  const t = getCurrentTime();
+  if (!state[currentSong.name]) state[currentSong.name] = { status: 'untested', notes: [], generalNotes: '' };
+  state[currentSong.name].notes.push({ time: Math.round(t * 10) / 10, type, text, timestamp: new Date().toISOString() });
+  saveState();
+  renderGrid();
+  drawProgressMarkers();
+}
+
+function addSpecNote() {
+  if (!currentSong) return;
+  const type = document.getElementById('specNoteType').value;
+  const text = document.getElementById('specNoteText').value.trim();
+  if (!text) return;
+  quickNote(type, text);
+  document.getElementById('specNoteText').value = '';
+}
+
+// ─── SPECTROGRAM ─────────────────────────────────────
+
+function openSpectrogram() {
+  if (!currentSong || !analyser) return;
+  document.getElementById('specOverlay').classList.add('active');
+  document.getElementById('specTitle').textContent = `Spectrogram — ${parseSongTitle(currentSong.name)}`;
+  const sc = document.getElementById('specCanvas');
+  sc.width = sc.clientWidth * 2;
+  sc.height = sc.clientHeight * 2;
+  const wc = document.getElementById('waveCanvas');
+  wc.width = wc.clientWidth * 2;
+  wc.height = wc.clientHeight * 2;
+  drawFullWaveform(wc);
+}
+
+function closeSpectrogram() {
+  document.getElementById('specOverlay').classList.remove('active');
+}
+
+function drawFullWaveform(canvas) {
+  if (!currentSong) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const data = currentSong.buffer.getChannelData(0);
+  const step = Math.ceil(data.length / w);
+  ctx.fillStyle = '#0a0a14';
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = '#3a5a8a';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let i = 0; i < w; i++) {
+    const idx = i * step;
+    let min = 1, max = -1;
+    for (let j = 0; j < step && idx + j < data.length; j++) {
+      const v = data[idx + j];
+      if (v < min) min = v;
+      if (v > max) max = v;
+    }
+    ctx.moveTo(i, (1 - max) * h / 2);
+    ctx.lineTo(i, (1 - min) * h / 2);
+  }
+  ctx.stroke();
+
+  // Note markers
+  const notes = (state[currentSong.name] || {}).notes || [];
+  notes.forEach(n => {
+    const x = (n.time / currentSong.duration) * w;
+    const mc = { bug: '#f44', praise: '#4f4', enhancement: '#7bf', note: '#fa0', instrument: '#c8f', mix: '#4cc' };
+    ctx.strokeStyle = mc[n.type] || '#fa0';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+  });
+}
+
+function updateSpectrogram() {
+  if (!analyser) return;
+  const canvas = document.getElementById('specCanvas');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+
+  const freqData = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(freqData);
+
+  // Scroll left
+  const img = ctx.getImageData(3, 0, w - 3, h);
+  ctx.putImageData(img, 0, 0);
+
+  // New column
+  for (let i = 0; i < h; i++) {
+    const fi = Math.floor((i / h) * freqData.length);
+    const v = freqData[freqData.length - 1 - fi];
+    const r = v > 180 ? 255 : v > 80 ? v * 2 : v * 0.5;
+    const g = v > 120 ? v : v > 40 ? v * 0.4 : 0;
+    const b = v > 80 ? 30 : v * 1.8;
+    ctx.fillStyle = `rgb(${r|0},${g|0},${b|0})`;
+    ctx.fillRect(w - 3, i, 3, 1);
+  }
+
+  // Playhead on waveform
+  const wc = document.getElementById('waveCanvas');
+  drawFullWaveform(wc);
+  const wctx = wc.getContext('2d');
+  const px = (getCurrentTime() / currentSong.duration) * wc.width;
+  wctx.strokeStyle = '#fff';
+  wctx.lineWidth = 2;
+  wctx.beginPath(); wctx.moveTo(px, 0); wctx.lineTo(px, wc.height); wctx.stroke();
+}
+
+// ─── EXPORT / IMPORT ─────────────────────────────────
+
+function exportFeedback() {
+  const allNotes = [];
+  for (const [song, data] of Object.entries(state)) {
+    if (data.notes) data.notes.forEach(n => allNotes.push({ song, ...n }));
+    if (data.generalNotes) allNotes.push({ song, type: 'general', text: data.generalNotes });
+  }
+
+  const report = {
+    exported: new Date().toISOString(),
+    engine_version: '0.4.1',
+    summary: {
+      total_songs: songs.length,
+      favorites: songs.filter(s => (state[s.name]||{}).status === 'favorite').length,
+      good: songs.filter(s => (state[s.name]||{}).status === 'good').length,
+      needs_work: songs.filter(s => (state[s.name]||{}).status === 'needs-work').length,
+      broken: songs.filter(s => (state[s.name]||{}).status === 'broken').length,
+      untested: songs.filter(s => (state[s.name]||{}).status === 'untested').length,
+      total_notes: allNotes.length,
+      total_bugs: allNotes.filter(n => n.type === 'bug').length,
+    },
+    songs: Object.entries(state).map(([name, data]) => ({
+      name,
+      title: parseSongTitle(name),
+      status: data.status,
+      general_notes: data.generalNotes || '',
+      timestamped_notes: data.notes || [],
+    })).filter(s => s.status !== 'untested' || s.timestamped_notes.length > 0),
+    // Agent-friendly: bugs grouped for action
+    action_items: allNotes.filter(n => n.type === 'bug' || n.type === 'enhancement' || n.type === 'instrument' || n.type === 'mix')
+      .sort((a, b) => a.song.localeCompare(b.song)),
+  };
+
+  const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `chipforge-qa-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importFeedback() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (data.songs) {
+        data.songs.forEach(s => {
+          if (!state[s.name]) state[s.name] = { status: 'untested', notes: [], generalNotes: '' };
+          if (s.status && s.status !== 'untested') state[s.name].status = s.status;
+          if (s.general_notes) state[s.name].generalNotes = s.general_notes;
+          if (s.timestamped_notes) state[s.name].notes = [...(state[s.name].notes || []), ...s.timestamped_notes];
+        });
+        saveState();
+        renderGrid();
+      }
+    } catch(e) { alert('Failed to import: ' + e.message); }
+  };
+  input.click();
+}
+
+// ─── KEYBOARD SHORTCUTS ──────────────────────────────
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  switch(e.key) {
+    case ' ': e.preventDefault(); togglePlay(); break;
+    case 'ArrowLeft': skip(-5); break;
+    case 'ArrowRight': skip(5); break;
+    case 'f': case 'F': if (currentSong) markSong(CSS.escape(currentSong.name), 'favorite'); break;
+    case 'b': case 'B': quickNote('bug', 'Bug at this timestamp'); break;
+    case 'n': case 'N': document.getElementById('specNoteText').focus(); openSpectrogram(); break;
+    case 's': case 'S': openSpectrogram(); break;
+    case 'Escape': closeSpectrogram(); break;
+  }
+});
+
+// ─── UTILITIES ───────────────────────────────────────
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// CSS.unescape polyfill
+if (!CSS.unescape) CSS.unescape = s => s.replace(/\\(.)/g, '$1');
+
+</script>
+</body>
+</html>
